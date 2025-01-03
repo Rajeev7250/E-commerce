@@ -1,0 +1,138 @@
+{% extends 'cold_cloths/home.html' %}
+{% load static %}
+
+{% block content %}
+{% if user.is_authenticated and user.role == 'Admin' %}
+<div class="container py-4">
+    <h2 class="mb-4">Add New Product</h2>
+    
+    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+            <!-- Basic Product Information -->
+            <div class="col-md-6">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="stock" class="form-label">Stock</label>
+                <input type="number" class="form-control" id="stock" name="stock" required>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="sku" class="form-label">SKU</label>
+                <input type="text" class="form-control" id="sku" name="sku" required>
+            </div>
+            
+            <div class="col-12">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="thumbnail_img" class="form-label">Thumbnail Image</label>
+                <input type="file" class="form-control" id="thumbnail_img" name="thumbnail_img">
+            </div>
+
+            <!-- Product Details Section -->
+            <div class="col-12 mt-4">
+                <h4>Product Details</h4>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="size" class="form-label">Size</label>
+                <input type="text" class="form-control" id="size" name="size" required>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="color" class="form-label">Color</label>
+                <input type="text" class="form-control" id="color" name="color" required>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select" id="gender" name="gender" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Unisex">Unisex</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
+                <input type="text" class="form-control" id="type" name="type" required>
+            </div>
+
+            <!-- Product Images Section -->
+            <div class="col-12 mt-4">
+                <h4>Additional Images</h4>
+                <div id="image-container">
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <input type="file" class="form-control" name="product_images[]">
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="image_titles[]" placeholder="Image Title">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" onclick="addImageField()">Add More</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary">Add Product</button>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function addImageField() {
+    const container = document.getElementById('image-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'row mb-3';
+    newRow.innerHTML = `
+        <div class="col-md-5">
+            <input type="file" class="form-control" name="product_images[]">
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control" name="image_titles[]" placeholder="Image Title">
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-danger" onclick="this.closest('.row').remove()">Remove</button>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+</script>
+{% else %}
+<div class="container py-4">
+    <div class="alert alert-danger">
+        You don't have permission to access this page.
+    </div>
+</div>
+{% endif %}
+{% endblock %}

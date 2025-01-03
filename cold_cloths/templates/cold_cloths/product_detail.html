@@ -1,0 +1,156 @@
+{% extends 'cold_cloths/home.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <a href="/products" class="back-button btn btn-secondary mb-3" id="backButton">
+        ← Back
+    </a>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="carousel-container position-relative">
+                {% if product.productimage_set.exists %}
+                    <div id="productImageCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for img in product.productimage_set.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ img.file.url }}" class="d-block w-100" alt="{{ product.name }}" style="max-width: 525.236px; max-height: 700px;">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if product.productimage_set.count > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#productImageCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#productImageCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    {% if product.thumbnail_img %}
+                        <img src="{{ product.thumbnail_img.url }}" alt="{{ product.name }}" class="img-fluid" style="height: 700px;">
+                    {% else %}
+                        <img src="{% static 'images/default-product.jpg' %}" alt="{{ product.name }}" class="img-fluid" style="height: 700px;">
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <h1>{{ product.name }}</h1>
+            <p class="text-muted">{{ product.title }}</p>
+            
+            <p class="h3 text-primary mb-3">₹{{ product.price }}</p>
+            
+            <div class="mb-3">
+                {% if product.is_in_stock %}
+                    <span class="badge bg-success">In Stock</span>
+                {% else %}
+                    <span class="badge bg-danger">Out of Stock</span>
+                {% endif %}
+                <span class="ms-2">{{ product.stock }} available</span>
+            </div>
+            
+            <h4>Product Details</h4>
+            {% with detail=product.productdetail_set.first %}
+            <ul class="list-unstyled">
+                <li><strong>Size:</strong> {{ detail.size }}</li>
+                <li><strong>Color:</strong> {{ detail.color }}</li>
+                <li><strong>Gender:</strong> {{ detail.gender }}</li>
+                <li><strong>Type:</strong> {{ detail.type }}</li>
+            </ul>
+            {% endwith %}
+            
+            <p><strong>Category:</strong> {{ product.category.name }}</p>
+            
+            <div class="mt-4">
+                <h4>Description</h4>
+                <p>{{ product.description }}</p>
+            </div>
+            
+            {% if not request.user.is_staff %}
+                <div class="mt-4">
+                    <button class="btn btn-primary btn-lg add-to-cart-btn" data-product-id="{{ product.id }}" {% if not product.is_in_stock %}disabled{% endif %}>
+                        Add to Cart
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg ms-2">
+                        Buy Now
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    
+        // Add click event listeners to all add-to-cart buttons
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const button = this;
+    
+                if (!csrfToken) {
+                    alert('You need to log in to add items to the cart.');
+                    return;
+                }
+    
+                // Disable button while processing
+                button.disabled = true;
+                button.innerHTML = 'Adding...';
+    
+                // Send AJAX request to add item to cart
+                fetch('/add-to-cart/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: 1,
+                        size: 'M',  // Example default size
+                        color: 'Default'  // Example default color
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to add item to cart.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        // Update cart count if applicable
+                        const cartCounter = document.querySelector('.cart-count');
+                        if (cartCounter) {
+                            cartCounter.textContent = data.cart_count;
+                        }
+                        // Show success message
+                        button.innerHTML = 'Added!';
+                        setTimeout(() => {
+                            button.innerHTML = 'Add to Cart';
+                            button.disabled = false;
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    button.innerHTML = 'Add to Cart';
+                    button.disabled = false;
+                    alert('Error adding item to cart. Please try again.');
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
+

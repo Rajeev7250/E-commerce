@@ -1,0 +1,107 @@
+{% extends 'cold_cloths/home.html' %}
+{% load static %}
+{% block content %}
+{% if user.is_authenticated and user.role == 'Admin' %}
+
+<div class="container py-4">
+    <h2 class="mb-4">Edit Product</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ product.title }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" name="price" value="{{ product.price }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label for="stock" class="form-label">Stock</label>
+                <input type="number" class="form-control" id="stock" name="stock" value="{{ product.stock }}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id == product.category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="sku" class="form-label">SKU</label>
+                <input type="text" class="form-control" id="sku" name="sku" required>
+            </div>
+
+            <div class="col-12">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required>{{ product.description }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label for="thumbnail_img" class="form-label">Thumbnail Image</label>
+                {% if product.thumbnail_img %}
+                    <div class="mb-2">
+                        <img src="{{ product.thumbnail_img.url }}" alt="Current thumbnail" class="img-thumbnail" style="max-height: 100px;">
+                    </div>
+                {% endif %}
+                <input type="file" class="form-control" id="thumbnail_img" name="thumbnail_img">
+            </div>
+
+            <div class="col-12 mt-4">
+                <h4>Product Details</h4>
+            </div>
+
+            <div class="col-md-3">
+                <label for="size" class="form-label">Size</label>
+                <input type="text" class="form-control" id="size" name="size" value="{{ product.productdetail_set.first.size }}">
+            </div>
+
+            <div class="col-md-3">
+                <label for="color" class="form-label">Color</label>
+                <input type="text" class="form-control" id="color" name="color" value="{{ product.productdetail_set.first.color }}">
+            </div>
+
+            <div class="col-md-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select" id="gender" name="gender">
+                    <option value="Male" {% if product.productdetail_set.first.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if product.productdetail_set.first.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Unisex" {% if product.productdetail_set.first.gender == 'Unisex' %}selected{% endif %}>Unisex</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
+                <input type="text" class="form-control" id="type" name="type" value="{{ product.productdetail_set.first.type }}">
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary">Update Product</button>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% else %}
+<div class="container py-4">
+    <div class="alert alert-danger">
+        You don't have permission to access this page.
+    </div>
+</div>
+{% endif %}
+{% endblock %}

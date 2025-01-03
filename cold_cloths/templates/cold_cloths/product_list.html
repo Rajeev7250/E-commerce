@@ -1,0 +1,142 @@
+{% extends 'cold_cloths/home.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Products</h2>
+        {% if user.is_authenticated and user.role == 'Admin' %}
+            <a href="{% url 'add_product' %}" class="btn btn-primary">Add New Product</a>
+        {% endif %}
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-5 g-4">
+        {% for product in products %}
+            <div class="col">
+                <div class="card h-100" data-product-id="{{ product.id }}">
+                    <a href="{% url 'product_detail' product.id %}">
+                        {% if product.thumbnail_img %}
+                            <img src="{{ product.thumbnail_img.url }}" class="card-img-top product-img" 
+                                 alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'images/default-product.jpg' %}" class="card-img-top product-img" 
+                                 alt="{{ product.name }}">
+                        {% endif %}
+                    </a>
+                    <div class="card-body">
+                        <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                        </a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">₹{{ product.price }}</h5>
+                            {% if product.is_in_stock %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% else %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-3">
+                            {% if request.user.is_authenticated and user.role != 'Admin' %}
+                                <button class="btn btn-primary btn-sm w-100 add-to-cart-btn" 
+                                        data-product-id="{{ product.id }}"
+                                        {% if not product.is_in_stock or product.id in cart_product_ids %}disabled{% endif %}>
+                                    Add to Cart
+                                </button>
+                            {% else %}
+                                <button class="btn btn-secondary btn-sm w-100" disabled>
+                                    Login to Add to Cart
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+
+                        {% if user.is_authenticated and user.role == 'Admin' %}
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <a href="{% url 'edit_product' product.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <form action="{% url 'delete_product' product.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">No products available.</div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    
+        // Add click event listeners to all add-to-cart buttons
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const button = this;
+    
+                if (!csrfToken) {
+                    alert('You need to log in to add items to the cart.');
+                    return;
+                }
+    
+                // Disable button while processing
+                button.disabled = true;
+                button.innerHTML = 'Adding...';
+    
+                // Send AJAX request to add item to cart
+                fetch('/add-to-cart/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: 1,
+                        size: 'M',  // Example default size
+                        color: 'Default'  // Example default color
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to add item to cart.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        button.disabled = false; // Re-enable button on error
+                        button.innerHTML = 'Add to Cart';
+                    } else {
+                        // Update cart count if applicable
+                        const cartCounter = document.querySelector('.cart-count');
+                        if (cartCounter) {
+                            cartCounter.textContent = data.cart_count;
+                        }
+                        // Update button to reflect "Added" state
+                        button.innerHTML = 'Added';
+                        button.disabled = true; // Keep button disabled after success
+                        button.classList.add('added'); // Optional: Add a class for styling
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    button.innerHTML = 'Add to Cart';
+                    button.disabled = false;
+                    alert('Error adding item to cart. Please try again.');
+                });
+            });
+        });
+    });
+    
+</script>
+{% endblock %}

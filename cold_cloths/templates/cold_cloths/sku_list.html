@@ -1,0 +1,125 @@
+{% extends 'cold_cloths/home.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated and user.role == 'Admin' %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center mb-4">
+        <h3>SKU List</h3>
+        <a href="{% url 'add_product' %}" class="btn btn-primary">Add New Product</a>
+    </div>
+    <div class="card-body">
+        <table id="productTable" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Actions</th>
+                    <th>SKU</th>
+                    <th>Thumbnail</th>
+                    <th>Name</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Stock Status</th>
+                    <th>Stock Quantity</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Product Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">Confirm Product Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the product: <span id="productNameToDelete"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#productTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{% url 'product-list-api' %}",
+            type: 'GET'
+        },
+        columns: [
+            { data: 'actions', orderable: false, searchable: false },
+            { data: 'sku' },
+            { data: 'thumbnail', orderable: false, searchable: false },
+            { data: 'name' },
+            { data: 'title' },
+            { data: 'price' },
+            { data: 'stock_status' },
+            { data: 'stock' },
+            { data: 'category' },
+            { data: 'description' },
+            { data: 'created_at' },
+            { data: 'updated_at' }
+        ],
+        columnDefs: [
+            {
+                targets: 1,  // SKU column
+                render: $.fn.dataTable.render.text()  // Prevent XSS
+            }
+        ]
+    });
+
+    // Delete Product Modal Handling
+    $(document).on('click', '.delete-product', function() {
+        const productId = $(this).data('id');
+        const productName = $(this).data('name');
+        
+        $('#productNameToDelete').text(productName);
+        $('#confirmDeleteBtn').data('product-id', productId);
+        $('#deleteProductModal').modal('show');
+    });
+
+    $('#confirmDeleteBtn').click(function() {
+        const productId = $(this).data('product-id');
+        $.ajax({
+            url: `/product/delete/${productId}/`,
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                $('#productTable').DataTable().ajax.reload();
+                $('#deleteProductModal').modal('hide');
+            },
+            error: function(xhr) {
+                console.error('Error deleting product');
+            }
+        });
+    });
+});
+</script>
+{% csrf_token %}
+{% else %}
+<div class="alert alert-danger">
+    You do not have permission to view this page.
+</div>
+{% endif %}
+{% endblock %}

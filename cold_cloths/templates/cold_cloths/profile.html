@@ -1,0 +1,89 @@
+{% extends 'cold_cloths/home.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <div class="row">
+                        <!-- Profile Image Section -->
+                        <div class="col-md-4 text-center border-end">
+                            <div class="position-relative mb-4">
+                                {% if user.user_profile_image %}
+                                    <img src="{{ user.user_profile_image.url }}"
+                                         alt="Profile Picture"
+                                         class="rounded-circle shadow-sm"
+                                         style="width: 180px; height: 180px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-gradient text-white d-flex align-items-center justify-content-center mx-auto shadow-sm"
+                                         style="width: 180px; height: 180px; background: linear-gradient(45deg, #3498db, #2980b9);">
+                                        <span style="font-size: 4rem;">{{ user.username|first|upper }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                            </div>
+                            <h3 class="mb-2">{{ user.username }}</h3>
+                            <p class="text-muted">{{ user.email }}</p>
+                        </div>
+
+                        <!-- Profile Details Section -->
+                        <div class="col-md-8">
+                            <div style="display: flex; justify-content: space-between;">
+
+                                <h4 class="text-primary mb-4">Personal Information</h4>
+                                <a href="{% url 'profile_edit' %}" 
+                                   class="mb-4 p-2 shadow-sm">
+                                    {% include './icon/pencil-fill.svg' %}
+                                </a>
+                            </div>
+                            <div class="row g-4">
+                                <!-- Contact Information -->
+                                <div class="col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3">Contact Details</h5>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Phone</small>
+                                                <p class="mb-2">{{ user.phone_number|default:"Not provided" }}</p>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Email</small>
+                                                <p class="mb-0">{{ user.email }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Location Information -->
+                                <div class="col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3">Location</h5>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Address</small>
+                                                <p class="mb-2">{{ user.address }}</p>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">City, State</small>
+                                                <p class="mb-2">{{ user.city|default:"Not provided" }}, {{ user.state|default:"Not provided" }}</p>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Country</small>
+                                                <p class="mb-2">{{ user.country|default:"Not provided" }}</p>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">PIN Code</small>
+                                                <p class="mb-0">{{ user.pin_code }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
